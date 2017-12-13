@@ -1,6 +1,8 @@
 #include "WPILib.h"
 #include "AHRS.h"
+#include "networktables/NetworkTableInstance.h"
 
+using namespace nt;
 
 /**
  * This is a demo program providing a real-time display of navX
@@ -44,13 +46,21 @@ public:
 private:
     void RobotInit()
     {
-        table = NetworkTable::GetTable("datatable");
+    	NetworkTableInstance::GetDefault().GetTable("datatable");
         lw = LiveWindow::GetInstance();
         try {
-            /* Communicate w/navX MXP via the MXP SPI Bus.                                       */
-            /* Alternatively:  I2C::Port::kMXP, SerialPort::Port::kMXP or SerialPort::Port::kUSB */
-            /* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details.   */
-            ahrs = new AHRS(SPI::Port::kMXP);
+			/***********************************************************************
+			 * navX-MXP:
+			 * - Communication via RoboRIO MXP (SPI, I2C, TTL UART) and USB.
+			 * - See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface.
+			 *
+			 * navX-Micro:
+			 * - Communication via I2C (RoboRIO MXP or Onboard) and USB.
+			 * - See http://navx-micro.kauailabs.com/guidance/selecting-an-interface.
+			 *
+			 * Multiple navX-model devices on a single robot are supported.
+			 ************************************************************************/
+            ahrs = new AHRS(SerialPort::Port::kUSB);
         } catch (std::exception& ex ) {
             std::string err_string = "Error instantiating navX MXP:  ";
             err_string += ex.what();

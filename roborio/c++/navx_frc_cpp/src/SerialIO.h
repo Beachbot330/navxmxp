@@ -39,6 +39,7 @@ class SerialIO : public IIOProvider {
     IIOCompleteNotification::BoardState board_state;
     IBoardCapabilities *board_capabilities;
     double last_valid_packet_time;
+    bool is_usb;
 
 public:
     SerialIO( SerialPort::Port port_id,
@@ -54,6 +55,7 @@ public:
     void ZeroDisplacement();
     void Run();
     void Stop();
+    void EnableLogging(bool enable);
 private:
 
     SerialPort *ResetSerialPort();

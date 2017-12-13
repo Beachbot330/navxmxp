@@ -50,7 +50,12 @@ class Robot: public SampleRobot, public PIDOutput
 
     const static int joystickChannel	= 0;
 
-    RobotDrive robotDrive;	            // Robot drive system
+    Spark frontLeft;
+    Spark rearLeft;
+    Spark frontRight;
+    Spark rearRight;
+
+    MecanumDrive robotDrive;	        // Robot drive system
     Joystick stick;			            // Driver Joystick
     AHRS *ahrs;                         // navX MXP
     PIDController *turnController;      // PID Controller
@@ -65,18 +70,30 @@ public:
     }
 
 	Robot() :
-            robotDrive(frontLeftChannel, rearLeftChannel,
-                       frontRightChannel, rearRightChannel), // initialize variables in same
+        frontLeft(frontLeftChannel),
+		rearLeft(rearLeftChannel),
+		frontRight(frontRightChannel),
+		rearRight(rearRightChannel),
+		robotDrive(frontLeft,  rearLeft,
+                   frontRight, rearRight),	// these must be initialized in the
             stick(joystickChannel)                           // order as declared above.
     {
 	    rotateToAngleRate = 0.0f;
         robotDrive.SetExpiration(0.1);
-        robotDrive.SetInvertedMotor(RobotDrive::kFrontLeftMotor, true);	// invert left side motors
-        robotDrive.SetInvertedMotor(RobotDrive::kRearLeftMotor, true);	// change to match your robot
+        frontLeft.SetInverted(true);  // invert the left side motors
+        rearLeft.SetInverted(true);   // (remove/modify to match your robot)
         try {
-            /* Communicate w/navX MXP via the MXP SPI Bus.                                       */
-            /* Alternatively:  I2C::Port::kMXP, SerialPort::Port::kMXP or SerialPort::Port::kUSB */
-            /* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details.   */
+			/***********************************************************************
+			 * navX-MXP:
+			 * - Communication via RoboRIO MXP (SPI, I2C, TTL UART) and USB.
+			 * - See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface.
+			 *
+			 * navX-Micro:
+			 * - Communication via I2C (RoboRIO MXP or Onboard) and USB.
+			 * - See http://navx-micro.kauailabs.com/guidance/selecting-an-interface.
+			 *
+			 * Multiple navX-model devices on a single robot are supported.
+			 ************************************************************************/
             ahrs = new AHRS(SPI::Port::kMXP);
         } catch (std::exception& ex ) {
             std::string err_string = "Error instantiating navX MXP:  ";
@@ -137,8 +154,8 @@ public:
                 /* Y axis for forward movement, and the current           */
                 /* calculated rotation rate (or joystick Z axis),         */
                 /* depending upon whether "rotate to angle" is active.    */
-                robotDrive.MecanumDrive_Cartesian(stick.GetX(), stick.GetY(),
-                                                  currentRotationRate ,ahrs->GetAngle());
+                robotDrive.DriveCartesian(stick.GetX(), stick.GetY(),
+                                          currentRotationRate ,ahrs->GetAngle());
             } catch (std::exception& ex ) {
                 std::string err_string = "Error communicating with Drive System:  ";
                 err_string += ex.what();
